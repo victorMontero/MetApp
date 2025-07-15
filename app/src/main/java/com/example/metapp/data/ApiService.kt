@@ -1,0 +1,16 @@
+package com.example.metapp.data
+
+import com.example.metapp.domain.models.ArtObject
+import com.example.metapp.domain.models.SearchResponse
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface ApiService {
+
+    @GET("public/collection/v1/search")
+    suspend fun searchObjects(@Query("q") query: String): SearchResponse
+
+    @GET("public/collection/v1/objects/{objectId}")
+    suspend fun getObjectDetails(@Path("objectId") objectId: Int): ArtObject
+}
