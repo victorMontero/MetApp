@@ -9,4 +9,6 @@ interface ArtRepository {
 
     suspend fun getObjectDetails(objectId: Int): ArtObject
 
+    suspend fun getEuropeanPaintingsGallery(): Result<List<ArtObject>>
+
 }

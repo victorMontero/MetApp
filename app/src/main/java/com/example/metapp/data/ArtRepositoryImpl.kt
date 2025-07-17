@@ -2,6 +2,8 @@ package com.example.metapp.data
 
 import com.example.metapp.domain.models.ArtObject
 import com.example.metapp.utils.Result
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
 
@@ -21,5 +23,43 @@ class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
 
     override suspend fun getObjectDetails(objectId: Int): ArtObject {
         return service.getObjectDetails(objectId)
+    }
+
+    override suspend fun getEuropeanPaintingsGallery(): Result<List<ArtObject>> {
+        return fetchCuratedGallery {
+            service.searchObjects(departmentId = 11, isOnView = true)
+        }
+    }
+
+    private suspend fun fetchCuratedGallery(
+        limit: Int = 20,
+        searchAction: suspend () -> com.example.metapp.domain.models.SearchResponse
+    ): Result<List<ArtObject>> {
+        return try {
+            // Etapa 1: Executar a ação de busca para obter os IDs
+            val searchResponse = searchAction()
+            val objectIDs = searchResponse.objectIDs ?: return Result.Success(emptyList())
+            val idsToFetch = objectIDs.take(limit)
+
+            // Etapa 2: Buscar os detalhes em paralelo usando corrotinas
+            val artObjects = coroutineScope {
+                idsToFetch.map { id ->
+                    async {
+                        try {
+                            service.getObjectDetails(id)
+                        } catch (e: Exception) {
+                            // Se um único objeto falhar, retornamos null para ele
+                            // e o filtramos depois, não quebrando a lista inteira.
+                            null
+                        }
+                    }
+                }.mapNotNull { it.await() } // awaitAll() e depois filterNotNull()
+            }
+            Result.Success(artObjects)
+
+        } catch (e: Exception) {
+            // Se a busca inicial de IDs falhar (ex: sem internet), capturamos aqui.
+            Result.Error(e.message, e)
+        }
     }
 }
