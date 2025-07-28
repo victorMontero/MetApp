@@ -5,11 +5,8 @@ import com.example.metapp.domain.models.SearchResponse
 import com.example.metapp.utils.Result
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import javax.inject.Inject // <-- Importe o Inject
-import javax.inject.Singleton // <-- Importe o Singleton
 
-@Singleton // Adicione o escopo, já que o ApplicationComponent é Singleton
-class ArtRepositoryImpl @Inject constructor(private val service: ApiService): ArtRepository {
+class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
 
     override suspend fun searchObjects(query: String): Result<List<Int>> {
         return try {
