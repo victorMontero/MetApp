@@ -1,6 +1,7 @@
 package com.example.metapp.data
 
 import com.example.metapp.domain.models.ArtObject
+import com.example.metapp.domain.models.SearchResponse
 import com.example.metapp.utils.Result
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -26,14 +27,14 @@ class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
     }
 
     override suspend fun getEuropeanPaintingsGallery(): Result<List<ArtObject>> {
-        return fetchCuratedGallery {
+        return fetchCuratedGallery(limit = 12) {
             service.searchObjects(departmentId = 11, isOnView = true)
         }
     }
 
     private suspend fun fetchCuratedGallery(
         limit: Int = 20,
-        searchAction: suspend () -> com.example.metapp.domain.models.SearchResponse
+        searchAction: suspend () -> SearchResponse
     ): Result<List<ArtObject>> {
         return try {
             // Etapa 1: Executar a ação de busca para obter os IDs
