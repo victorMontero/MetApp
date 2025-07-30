@@ -5,8 +5,11 @@ import com.example.metapp.domain.models.SearchResponse
 import com.example.metapp.utils.Result
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
+@Singleton
+class ArtRepositoryImpl @Inject constructor(private val service: ApiService) : ArtRepository {
 
     override suspend fun searchObjects(query: String): Result<List<Int>> {
         return try {
@@ -28,7 +31,7 @@ class ArtRepositoryImpl(private val service: ApiService): ArtRepository {
 
     override suspend fun getEuropeanPaintingsGallery(): Result<List<ArtObject>> {
         return fetchCuratedGallery(limit = 12) {
-            service.searchObjects(departmentId = 11, isOnView = true)
+            service.searchObjects(query = "a", departmentId = 11, hasImages = true)
         }
     }
 

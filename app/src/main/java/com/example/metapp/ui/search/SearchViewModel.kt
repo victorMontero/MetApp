@@ -1,12 +1,11 @@
 package com.example.metapp.ui.search
 
-import android.R.attr.data
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.metapp.data.ArtRepository
 import com.example.metapp.utils.Result
 import com.example.metapp.utils.UiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,38 +14,76 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class SearchViewModel @Inject constructor(
     private val repository: ArtRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    private fun searchObjects(query: String){
+    init {
+        getEuropeanPaintingsGallery()
+    }
+
+    fun searchObjects(query: String) {
         viewModelScope.launch {
+            _uiState.update { UiState.Loading }
             try {
-                when(val result = repository.searchObjects("sunflower")){
+                when (val result = repository.searchObjects(query)) {
                     is Result.Success -> {
                         val objectsIds = result.data
-                        if (objectsIds.isEmpty()){
+                        if (objectsIds.isEmpty()) {
                             _uiState.update { UiState.Success(emptyList()) }
                         } else {
                             val artObjects = coroutineScope {
                                 objectsIds.map { id ->
-                                    async { repository.getObjectDetails(id) }
+                                    async {
+                                        try {
+                                            repository.getObjectDetails(id)
+                                        } catch (e: Exception) {
+                                            null
+                                        }
+                                    }
                                 }
-                            }.map { it.await() }
+                            }.mapNotNull { it.await() }
                             _uiState.update { UiState.Success(artObjects) }
                         }
                     }
+
                     is Result.Error -> {
-                        _uiState.update { UiState.Error(result.message ?: "Ërro ao buscar ids") }
+                        _uiState.update { UiState.Error(result.message ?: "Erro ao buscar ids") }
                     }
+
                     is Result.Loading -> {}
                 }
-            } catch (e: Exception){
-                _uiState.update { UiState.Error(e.message ?: "erro inesperadp") }
+            } catch (e: Exception) {
+                _uiState.update { UiState.Error(e.message ?: "Erro inesperado") }
             }
         }
+    }
 
+    fun getEuropeanPaintingsGallery() {
+        viewModelScope.launch {
+            _uiState.update { UiState.Loading }
+            try {
+                when (val result = repository.getEuropeanPaintingsGallery()) {
+                    is Result.Success -> {
+                        val artObjects = result.data
+
+                        _uiState.update { UiState.Success(artObjects) }
+                    }
+
+                    is Result.Error -> _uiState.update {
+                        UiState.Error(
+                            result.message ?: "Erro ao buscar artes"
+                        )
+                    }
+
+                    is Result.Loading -> {}
+                }
+            } catch (e: Exception) {
+                _uiState.update { UiState.Error(e.message ?: "Erro inesperado") }
+            }
+        }
     }
 }

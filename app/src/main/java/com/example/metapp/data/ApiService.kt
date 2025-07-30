@@ -15,7 +15,8 @@ interface ApiService {
         @Query("isOnView") isOnView: Boolean? = null,
         @Query("isHighlight") isHighlight: Boolean? = null,
         @Query("dateBegin") dateBegin: Int? = null,
-        @Query("dateEnd") dateEnd: Int? = null
+        @Query("dateEnd") dateEnd: Int? = null,
+        @Query("hasImages") hasImages: Boolean? = null
     ): SearchResponse
 
     @GET("public/collection/v1/objects/{objectId}")
